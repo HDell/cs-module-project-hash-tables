@@ -7,7 +7,10 @@ class HashTableEntry:
         self.value = value
         self.next = None
 
-
+class LinkedList:
+    def __init__(self, head=None):
+        self.head = head
+    
 # Hash table can't have fewer than this many slots
 MIN_CAPACITY = 8
 
@@ -27,6 +30,7 @@ class HashTable:
         else:
             self.capacity = capacity
         self.array = [None] * self.capacity
+        self.load = 0
 
 
     def get_num_slots(self):
@@ -40,6 +44,7 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        return len(self.array)
 
 
     def get_load_factor(self):
@@ -49,6 +54,7 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        return self.load / self.capacity
 
 
     def fnv1(self, key):
@@ -82,7 +88,7 @@ class HashTable:
         #return self.fnv1(key) % self.capacity
         return self.djb2(key) % self.capacity
 
-    def put(self, key, value):
+    def put(self, key, value): #upsert
         """
         Store the value with the given key.
 
@@ -91,8 +97,26 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        self.array[self.hash_index(key)] = value
-        
+        LL = self.array[self.hash_index(key)] 
+        if LL is None:
+            self.array[self.hash_index(key)] = LinkedList(HashTableEntry(key, value)) # Array points to the head
+            self.load += 1
+            if (self.get_load_factor() > 0.7):
+                self.resize(self.capacity * 2)
+            return
+        else:
+            current = LL.head
+        while current is not None:
+            if current.key == key:
+                current.value = value
+                return
+            elif current.next is None:
+                current.next = HashTableEntry(key, value)
+                self.load += 1
+                if (self.get_load_factor() > 0.7):
+                    self.resize(self.capacity * 2)
+                return
+            current = current.next
 
 
     def delete(self, key):
@@ -104,11 +128,30 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        ret_val = self.array[self.hash_index(key)]
-        if ret_val is None:
+        LL = self.array[self.hash_index(key)]
+        if LL is None:
             print("There is nothing to delete here.")
         else:
-            self.array[self.hash_index(key)] = None
+            prev = LL.head
+            current = prev.next
+            if prev.key == key:
+                LL.head = current
+                self.load -= 1
+                if (self.capacity > MIN_CAPACITY) and (self.get_load_factor() < 0.2):
+                    self.resize(self.capacity // 2)
+                return
+            else:
+                while current is not None:
+                    if current.key == key:
+                        prev.next = current.next
+                        self.load -= 1
+                        if (self.capacity > MIN_CAPACITY) and (self.get_load_factor() < 0.2):
+                            self.resize(self.capacity // 2)
+                        return
+                    else:
+                        prev = current
+                        current = current.next
+                print("There is nothing to delete here.")
 
 
     def get(self, key):
@@ -120,7 +163,16 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        return self.array[self.hash_index(key)]
+        LL = self.array[self.hash_index(key)]
+        if LL is not None:
+            current = LL.head
+            while current is not None:
+                if current.key == key:
+                    return current.value
+                current = current.next
+            return current
+        else:
+            return LL
 
     def resize(self, new_capacity):
         """
@@ -130,6 +182,25 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        self.capacity = new_capacity
+        entries = [None] * self.load
+        index = 0
+        for LL in self.array:
+            if LL is not None and LL.head is not None:
+                current = LL.head
+                entries[index] = current
+                current = current.next
+                while current is not None:
+                    index += 1
+                    entries[index] = current
+                    current = current.next
+                index += 1
+        self.array = [None] * self.capacity
+        self.load = 0 # The self.put() method below will redo the incrementing of the load
+        for elem in entries:
+            self.put(elem.key, elem.value)
+
+
 
 
 
