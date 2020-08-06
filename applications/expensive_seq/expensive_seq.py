@@ -1,10 +1,16 @@
 # Your code here
-
+cache = {}
 
 def expensive_seq(x, y, z):
     # Your code here
-
-
+    if (x, y, z) in cache.keys():
+        return cache[(x,y,z)]
+    elif x <= 0:
+        cache[(x,y,z)] = y + z
+        return cache[(x,y,z)]
+    else: # x > 0
+        cache[(x,y,z)] = expensive_seq(x-3, y+3, z*3) + expensive_seq(x-2, y+2, z*2) + expensive_seq(x-1, y+1, z)
+        return cache[(x,y,z)]
 
 if __name__ == "__main__":
     for i in range(10):
