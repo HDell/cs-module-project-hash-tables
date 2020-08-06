@@ -1,5 +1,23 @@
 def no_dups(s):
     # Your code here
+    cache = {}
+    o = ""
+    n = s.split()
+    length = len(n)
+    counter = 0
+    for word in n:
+        counter += 1
+        if word in cache.keys():
+            cache[word] += 1
+        else:
+            cache[word] = 1
+            if counter > 1:
+                o += " "
+            o += word
+
+    return o
+
+            
 
 
 
